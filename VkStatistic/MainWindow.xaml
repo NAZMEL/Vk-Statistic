@@ -4,9 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VkStatistic"
+        xmlns:vms="clr-namespace:VkStatistic.Templates"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
-    </Grid>
+        Title="Vk Statistic" Height="750" Width="1325"
+        ResizeMode="CanMinimize"
+        Icon="Templates/Images/icon.png"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vms:LoginControlVM}">
+            <vms:LoginControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vms:UserControlVM}">
+            <vms:UserControl/>
+        </DataTemplate>
+    </Window.Resources>
+    <ContentPresenter Content="{Binding CurrentContentVM}"/>
 </Window>
