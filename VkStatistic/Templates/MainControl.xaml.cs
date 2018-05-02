@@ -1,64 +1,41 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using VkNet.Model.RequestParams;
+using VkNet;
 
-using VkStatistic.Templates;
 
 namespace VkStatistic.Templates
 {
-    public partial class UserControlVM : UserControl
+    public partial class MainControl : UserControl
     {
-        public UserControlVM()
-        {
-            InitializeComponent();      
-        }
-
         public Vk vk;
-        private void Button_Click(object sender, RoutedEventArgs e)
+        public MainControl(ref VkApi vkApi)
         {
-
-            string login = LoginBox.Text.ToString();
-            string password = PaswrdBox.Password.ToString();
-           
-            vk = new Vk(login, password);
-            this.DataContext = vk;
-
+            InitializeComponent();
+            vk = new Vk(vkApi);
+            vk.UserAccountID = "Enter ID";
+            DataContext = vk;
         }
 
-        void Button_Send_Id(object sender, RoutedEventArgs e)
+        private void GotFocusID(object sender, EventArgs e)
         {
-            Debug.WriteLine("call Main Process");
-            //string userId = IdUserBox.ToString();
+            TextBox txt = sender as TextBox;
+            if (txt.Text == "Enter ID")
+            {
+                txt.Foreground = new SolidColorBrush(Colors.Black);
+                txt.Text = "";
+            }
         }
 
-        private void SendMessage(string message, long id = 232607422)
+        void LostFocusID(object sender, EventArgs e)
         {
-            try
-            {
-                vk._vkApi.Messages.Send(new MessagesSendParams
-                {
-                    UserId = id,
-                    Message = message
-                });
-            }
-            catch
-            {
-                MessageBox.Show("Для відправлення повідомлень необхідно авторизуватись!");
-            }
+            TextBox txt = sender as TextBox;
 
+            if (txt.Text == "")
+            {
+                txt.Text = "Enter ID";
+                txt.Foreground = new SolidColorBrush(Colors.Gray);
+            }
         }
     }
 }

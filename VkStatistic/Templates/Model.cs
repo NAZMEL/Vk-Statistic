@@ -6,9 +6,11 @@ namespace VkStatistic.Templates
 {
     public class UserData : INotifyPropertyChanged
     {
+        /// <summary>
+        ///     Без InotifyPropetrtyChanged ObservableCollection працювати не буде
+        /// </summary>
+        public UserData(){}
 
-        public UserData()
-        {}
         string FirstName { get; set; }
         string LastName { get; set; }
         string Birthday { get; set; }
@@ -20,8 +22,6 @@ namespace VkStatistic.Templates
         string Country { set; get; }
         string Education { set; get; }
         string Career { set; get; }
-
-
 
         public string firstName
         {
@@ -65,7 +65,7 @@ namespace VkStatistic.Templates
             get => Sex;
             set
             {
-                sex = value;
+                Sex = value;
                 OnPropertyChanged("Sex");
             }
         }
@@ -125,18 +125,173 @@ namespace VkStatistic.Templates
             get => Career;
         }
 
+        string NumberFriends { set; get; }
+        string NumberFollowers { set; get; }
+        string NumberMutualFriends { set; get; }
+        string NumberMales { set; get; }
+        string NumberFemales { set; get; }
+        string NumberOnlineFriends { set; get; }
+        string NumberPhotos { get; set; }
+        string NumberAudios { get; set; }
+        string NumberVideos { get; set; }
 
-        public string numberFriends { set; get; }
-        public string numberFollowers { set; get; }
-        public string numberMutualFriends { set; get; }
-        public string numberMales { set; get; }
-        public string numberFemales { set; get; }
-        public string numberOnlineFriends { set; get; }
-        public string numberPhotos { get; set; }
-        public string numberAudios { get; set; }
-        public string numberVideos { get; set; }
+        public string numberFriends
+        {
+            get => NumberFriends;
+            set
+            {
+                NumberFriends = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberFollowers
+        {
+            get => NumberFollowers;
+            set
+            {
+                NumberFollowers = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberMutualFriends
+        {
+            get => NumberMutualFriends;
+            set
+            {
+                NumberMutualFriends = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberMales
+        {
+            get => NumberMales;
+            set
+            {
+                NumberMales = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberFemales
+        {
+            get => NumberFemales;
+            set
+            {
+                NumberFemales = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberOnlineFriends
+        {
+            get => NumberOnlineFriends;
+            set
+            {
+                NumberOnlineFriends = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberPhotos
+        {
+            get => NumberPhotos;
+            set
+            {
+                NumberPhotos = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberAudios
+        {
+            get => NumberAudios;
+            set
+            {
+                NumberAudios = value;
+                OnPropertyChanged();
+            }
+        }
+        public string numberVideos
+        {
+            get => NumberVideos;
+            set
+            {
+                NumberVideos = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public Uri test { get; set; }
+  
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChanged([CallerMemberName]string prop = "")
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+        }
+
+        public void Clear()
+        {
+            this.birthday = "";
+            this.career = "";
+            this.city = "";
+            this.country = "";
+            this.firstName = "";
+            this.lastName = "";
+            this.numberAudios = "";
+            this.numberFemales = "";
+            this.numberFollowers = "";
+            this.numberFriends = "";
+            this.numberMales = "";
+            this.numberMutualFriends = "";
+            this.numberPhotos = "";
+            this.numberVideos = "";
+            this.numberOnlineFriends = "";
+            this.online = "";
+            this.Photo = null;
+            this.sex = "";
+            this.userID = null;
+        }
+  
+    }
+
+
+    public class Account: INotifyPropertyChanged
+    {
+        public long uid { set; get; }
+        public string token { set; get; }
+        public string firstName { set; get; }
+        public string lastName { set; get; }
+        public Uri Photo { set; get; }
+
+        string login { get; set; }
+        public string Login
+        {
+            get => login;
+            set
+            {
+                login = value;
+                OnPropertyChanged("Login");
+            }
+        }
+
+        string password { get; set; }
+        public string Password
+        {
+            get => password;
+            set
+            {
+                password = value;
+                OnPropertyChanged("Password");
+            }
+        }
+
+        string error { get; set; }
+        public string Error
+        {
+            get => error;
+            set
+            {
+                error = value;
+                OnPropertyChanged("Error");
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -145,16 +300,6 @@ namespace VkStatistic.Templates
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
-    }
-
-
-    public class Account
-    {
-        public long uid { set; get; }
-        public string token { set; get; }
-        public string firstName { set; get; }
-        public string lastName { set; get; }
-        public Uri Photo { set; get; }
     }
 
 }

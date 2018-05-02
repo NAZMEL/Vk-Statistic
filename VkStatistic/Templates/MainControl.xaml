@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="VkStatistic.Templates.UserControl"
+﻿<UserControl x:Class="VkStatistic.Templates.MainControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -7,59 +7,103 @@
              mc:Ignorable="d" 
              d:DesignHeight="500" d:DesignWidth="700"
              Height="750" Width="1325">
+    <UserControl.Resources>
+        <!--
+        <Style  x:Key="IDTrigger">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ElementName=IDBox, Path=Foreground}" Value="Gray">
+                    <Setter Property="Control.IsEnabled" Value="False"/>
+                </DataTrigger>
+                
+                <DataTrigger Binding="{Binding ElementName=IDBox, Path=Foreground}" Value="Black">
+                    <Setter Property="Control.IsEnabled" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        -->
+
+        <Style x:Key="ButtonChange">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ElementName=IDBox, Path=Text}" Value="Enter ID">
+                    <Setter Property="Button.IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="35"/>
-            <RowDefinition Height="100"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="70"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="35"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
 
-        <TextBox Grid.Row="1"
-                 x:Name="LoginBox"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Top"
-                 Height="25" Width="150"
-                 Margin="15" />
+<!--
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" >
+            <Button Background="{x:Null}" BorderBrush="{x:Null}" Padding="5"  VerticalAlignment="Center"
+                    Content="USER'S STATISTIC" Foreground="#FFA2A2A2" FontSize="17"  FontWeight="Bold">
+            </Button>
+            <Button Background="{x:Null}" BorderBrush="{x:Null}" Padding="5"  VerticalAlignment="Center"
+                    Content="MY ACCOUNT" Foreground="#FFA2A2A2" FontSize="17"  FontWeight="Bold" >
+                <Button.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform/>
+                        <RotateTransform Angle="0.238"/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </Button.RenderTransform>
+            </Button>
+            <Button Background="{x:Null}" BorderBrush="{x:Null}" Padding="5"  VerticalAlignment="Center"
+                    Content="EXIT" Foreground="#FFA2A2A2" FontSize="17"  FontWeight="Bold">
+            </Button>
 
-        <PasswordBox Grid.Row="1"
-                 x:Name="PaswrdBox"
-                 HorizontalAlignment="Left"
-                 Height="25" Width="150"
-                 Margin="15 0 0 0"
-                 />
+        </StackPanel>
+        -->
 
 
-        <TextBox Grid.Row="1"
-                 x:Name="IdUserBox"
-                 HorizontalAlignment="Left"
-                 Margin="300 10 0 0"
-                 Width="150"
-                 Height="25"
-                 />
+        <StackPanel Grid.Row="1" Grid.Column ="0" Orientation="Horizontal">
+            <Label FontSize="17" Padding="5"
+                   Margin="30 15 10 10"
+                   Foreground="Black">
+                Enter user's ID for analyzing
+            </Label>
+            <TextBox  x:Name="IDBox"
+                      Margin="10"
+                      Width="200" Height="35"
+                      FontSize="17"
+                      Foreground="Gray"
+                      Text="{Binding UserAccountID, Mode=TwoWay}"
+                      GotFocus="GotFocusID"
+                      LostFocus="LostFocusID"/>
 
-        <Border Grid.Row="0" Background="#FF464646"
-                CornerRadius="0 0 25 25"
-                   />
-        
-        <Button Grid.Row="1"
-                Width="200" Height="50" FontSize="18"
-                Click="Button_Click">
-            <Button.Content>
-                Увійти
-            </Button.Content>
-        </Button>
-        
+            <Button 
+                    Content="Ok"
+                    Width="70" Height="35"
+                    FontSize="19"
+                    IsDefault="True"
+                    Style="{StaticResource ButtonChange}"
+                    Command="{Binding ClickCommand}"
+                    />
+        </StackPanel>
 
-        <ListBox x:Name="ListFriends"
-                    Margin="25"
+
+
+        <ListBox    x:Name="ListFriends"
+                    Margin="30 20 0 0"
                     Grid.Row="2"
-                    Height="500" Width="500"
-                    HorizontalAlignment="Left"
-                    ItemsSource="{Binding Users}"
+                    Grid.Column ="0"
+                    Height="520" Width="500"
+                    HorizontalAlignment="Left"                   
+                    ItemsSource="{Binding Users, UpdateSourceTrigger=PropertyChanged}"
                     ScrollViewer.VerticalScrollBarVisibility="Visible"
                     ScrollViewer.CanContentScroll="False"
-                     ScrollViewer.PanningRatio="0.1"
+                     ScrollViewer.PanningRatio="0.1" 
+                    Background="#FFB1D9F5"
                     >
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -93,19 +137,22 @@
 
 
         <StackPanel Grid.Row="2"
+                    Grid.Column ="1"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Margin="20"
+                    Margin="0 15 50 0"
                     Width="500" Height="500"
-                    DataContext="{Binding UsersStatistic}">
+                    DataContext="{Binding UsersStatistic,  UpdateSourceTrigger=PropertyChanged}">
 
             <StackPanel Orientation="Horizontal"
                         Margin="25">
-                <Image Source="{Binding Photo}"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Top"
-                   Width="70" Height="70"
-                   Margin="20"/>
+
+                <Ellipse Height="100" Width="100" Margin="0 10 0 0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding Photo}"  Stretch="UniformToFill"/>
+                    </Ellipse.Fill>
+                </Ellipse>
+
                 <TextBlock Margin="20"
                            HorizontalAlignment="Right">
                     <Run Text="{Binding firstName}"/>
@@ -116,22 +163,22 @@
                 </TextBlock>
             </StackPanel>
 
-            <TextBlock Margin="25 0 25 0">
-                <Run Text="{Binding numberFriends}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberMutualFriends}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberOnlineFriends}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberMales}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberFemales}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberFollowers}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberPhotos}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberAudios}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberVideos}"/> <LineBreak/>
-                <Run Text="{Binding Path=numberGroups}"/> <LineBreak/>
-            </TextBlock>
+            <StackPanel Margin="25 0 25 0">
+                <TextBlock>
+                    <Run Text="{Binding numberFriends, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberMutualFriends, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberOnlineFriends, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberMales,UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberFemales, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberFollowers, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberPhotos, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberAudios , UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberVideos, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                    <Run Text="{Binding Path=numberGroups, UpdateSourceTrigger=PropertyChanged}"/> <LineBreak/>
+                </TextBlock>
+            </StackPanel>
         </StackPanel>
 
-        <Border Grid.Row="3" Background="#FF464646"
-                CornerRadius="25 25 0 0"
-                   />
+
     </Grid>
 </UserControl>

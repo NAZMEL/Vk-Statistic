@@ -1,29 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using VkNet;
-using VkNet.Model;
-using VkNet.Enums.Filters;
-using System.Collections;
-using System.Collections.ObjectModel;
-using VkNet.Model.RequestParams;
-using System.Diagnostics;
-using System.Net;
-//using System.Drawing;
-using VkNet.Enums.SafetyEnums;
 using System.ComponentModel;
-using System.Threading;
 
 using VkStatistic.Templates;
 
@@ -32,36 +11,49 @@ namespace VkStatistic
 
     public partial class MainWindow : Window
     {
-        public Vk vk;
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new RootVM(ref vk);
+            DataContext = new RootVM();
         }
     }
-        
-    
 
-    class RootVM : INotifyPropertyChanged
+    public class RootVM : INotifyPropertyChanged
     {
-        object currentContentVM;
+        static public VkApi _vkApi;
+        UserControl _CurrentContentVM;
+       static Action CurrentContentAction;
 
-        public RootVM(ref Vk _vk)
+        static UserControl[] userControls = new UserControl[] { new LoginControl(delegate { CurrentContentAction(); }), new MainControl(ref _vkApi)};
+
+        static uint i = 0;
+
+        public RootVM()
         {
-            CurrentContentVM = new LoginControl();
+            _vkApi = new VkApi();
+            CurrentContentAction += ChangeCurrentContent;
+            CurrentContentVM = userControls[i]; 
         }
-        public object CurrentContentVM
+
+        public UserControl CurrentContentVM
         {
-            get => currentContentVM;
+            get => _CurrentContentVM;
             set
             {
-                if (currentContentVM != value)
+                if (_CurrentContentVM != value)
                 {
-                    currentContentVM = value;
+                    _CurrentContentVM = value;
                     OnPropertyChanged("CurrentContentVM");
                 }
             }
         }
+
+        public void ChangeCurrentContent()
+        {
+            _vkApi = (CurrentContentVM as LoginControl).GetVkData();
+            CurrentContentVM = userControls[++i];    
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {   
@@ -70,6 +62,11 @@ namespace VkStatistic
                 var e = new PropertyChangedEventArgs(propertyName);
                 this.PropertyChanged(this, e);
             }
+        }
+
+        public static ref VkApi GetVkData()
+        {
+            return ref _vkApi;
         }
     }
 

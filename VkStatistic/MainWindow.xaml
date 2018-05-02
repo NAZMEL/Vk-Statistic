@@ -11,12 +11,28 @@
         Icon="Templates/Images/icon.png"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <DataTemplate DataType="{x:Type vms:LoginControlVM}">
+        <DataTemplate DataType="{x:Type vms:LoginingUser}">
             <vms:LoginControl/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vms:UserControlVM}">
-            <vms:UserControl/>
+        <DataTemplate DataType="{x:Type vms:Vk}">
+            <vms:MainControl/>
         </DataTemplate>
     </Window.Resources>
-    <ContentPresenter Content="{Binding CurrentContentVM}"/>
+    <Grid Background="#FF7DA7CF">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="650"/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#4682B4"
+                CornerRadius="0 0 25 25"
+                   />
+        <ContentPresenter Grid.Row="1" 
+                          Content="{Binding CurrentContentVM}"/>
+
+        <Border Grid.Row="2" Background="#4682B4"
+                CornerRadius="25 25 0 0"/>
+    </Grid>
+    
 </Window>

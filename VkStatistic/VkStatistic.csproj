@@ -114,7 +114,7 @@
     <Compile Include="Templates\LoginControl.xaml.cs">
       <DependentUpon>LoginControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Templates\Logining.cs" />
+    <Compile Include="Templates\LoginingUser.cs" />
     <Compile Include="Templates\Model.cs" />
     <Compile Include="Templates\MainControl.xaml.cs">
       <DependentUpon>MainControl.xaml</DependentUpon>

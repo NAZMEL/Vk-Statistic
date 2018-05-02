@@ -4,24 +4,34 @@ using VkNet.Model;
 using VkNet.Enums.Filters;
 using System.Collections.ObjectModel;
 using VkNet.Model.RequestParams;
-//using System.Drawing;
 using VkNet.Enums.SafetyEnums;
-using System.Threading;
 using System.Diagnostics;
-using System.Windows;
-
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
+using System.Threading.Tasks;
 
 namespace VkStatistic.Templates
 {
-    public class Vk
+    public class Vk:INotifyPropertyChanged
     {
-        public VkApi _vkApi;
-        public long? userAccountID { set; get; }
+        VkApi _vkApi;
+        string _userAccountID { set; get; }
+        
+        public string UserAccountID
+        {
+            get => _userAccountID;
+            set
+            {
+                _userAccountID = value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Data about your friends
         /// </summary>
-        public ObservableCollection<UserData> Users { get; set; }
+        public ObservableCollection<UserData> Users { set; get; }
         /// <summary>
         ///     Data about written user id
         /// </summary>
@@ -34,149 +44,190 @@ namespace VkStatistic.Templates
         uint countMales = 0;
         uint countFemales = 0;
 
-        public Vk(string login , string password)
+
+        public Vk( VkApi vk)
         {
-            _vkApi = new VkApi();
             MyAccount = new Account();
-           
-            if(Logining(login, password)) MainProcess();
+            _canExecute = true;
+     
+            // важливо, щоб ObservableCollection спрацював, олгошуємо його в конструкторі, а вже тоді присвоюємо DataContext 
+            // інакше спочакту буде присвоєння DataContext, а тоді оголошення ObservableCollection - працювати не буде
+            Users = new ObservableCollection<UserData>();
+            UsersStatistic = new UserData();
         }
 
-        public void MainProcess(long? userId = 232607422)
+        private ICommand _clickCommand;
+        private bool _canExecute;
+
+        public ICommand ClickCommand
         {
-            Debug.WriteLine("Main Process");
-            FriendsAllData(userId);
-            GetStatisticData(userId);
-            //AccountData();
+            get
+            {
+                return _clickCommand ?? (_clickCommand = new CommandHandler(
+                     () => {  MainProcess(); }, 
+                    _canExecute)
+                 );
+            }
+        }
+ 
+        async void MainProcess()
+        {
+            _vkApi = RootVM.GetVkData();
+            if (UserAccountID == "Enter ID")
+            {
+                return;
+            }
+
+            // reset all data 
+            if(Users != null) Users.Clear();
+            if (UsersStatistic != null) UsersStatistic.Clear();
+           
+            try
+            {
+                long? userID = Convert.ToInt64(UserAccountID);
+                GetFriendsData(userID);                              // control
+                await FriendsAllData(userID);
+                GetStatisticData(userID);
+                //await AccountData();
+            }
+            catch
+            { 
+                return;
+            }    
         }
 
-        void AccountData(long? _userId = 232607422)
+        async Task AccountData(long? _userId)
         {
             var users = _vkApi.Users.Get(new long[] { (long)_userId }, ProfileFields.All);
-            foreach(var user in users)
+
+            await  Task.Run( () => {
+            foreach (var user in users)
             {
                 MyAccount.firstName = user.FirstName;
                 MyAccount.lastName = user.LastName;
                 MyAccount.Photo = (user.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? (user.Photo200Orig != new Uri("https://vk.com/images/camera_200.png") ? user.Photo200Orig : (user.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg"))) : (user.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? user.Photo200Orig : (user.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg"))));
-                
             }
+            });
         }
 
-        bool  Logining(string _login, string _password, ulong appId = 6410920)
+        async Task FriendsAllData(long? _userId)
         {
-            Settings scope = Settings.All;
-            bool status = false;
+            Debug.WriteLine("Call FriendAllData");
 
-            ApiAuthParams vkAuth = new ApiAuthParams{
-                ApplicationId = appId,
-                Login = _login,
-                Password = _password,
-                Settings = scope
-            };
-            try
+            await Task.Run(() =>
             {
-                if (_vkApi == null) _vkApi = new VkApi();
+                foreach (User friend in  GetFriendsData(_userId))
+                {
+                    if (friend.FirstName == "DELETED") continue;
+                    if (friend.Sex.ToString() == "Male") countMales++;
+                    else countFemales++;
 
-                _vkApi.Authorize(vkAuth);
-                MyAccount.token = _vkApi.Token;
-                MyAccount.uid = (long)_vkApi.UserId;
-                status = true;
-            }
 
-            catch (VkNet.Exception.VkApiAuthorizationException)
-            {
-                MessageBox.Show("Неправильно введені логін або пароль!");
-                _vkApi = null;
-                status = false;
-            }
-            catch (VkNet.Exception.VkApiException)
-            {
-                MessageBox.Show("Неможливо з'єднатись з сервером!");
-                _vkApi = null;
-                status = false;
-            }
-            catch
-            {
-                MessageBox.Show("Інша помилка");
-            }
-            if (status) MessageBox.Show("Ви увійшли");
-            return status;
+                    App.Current.Dispatcher.Invoke((Action)delegate // <--- HERE IMPORTANT (because object ObservableCollection must not call from other stream)
+                    {
+                        Users.Add(
+                               new UserData
+                               {
+                                   firstName = friend.FirstName,
+                                   lastName = friend.LastName,
+                                   userID = friend.Id,
+                                   birthday = "День народження: " + (friend.BirthDate != null ? (Convert.ToDateTime(friend.BirthDate)).ToLongDateString() : "не вказаний"),
+                                   sex = "Стать: " + friend.Sex,
+                                   city = "Місто: " + (friend.City != null ? friend.City.Title.ToString() : "не вказано"),
+                                   online = "Онлайн: " + (friend.Online == true ? "Онлайн" : "неонлайн"),
+                                   career = "Місце роботи: " + (friend.Career.Count != 0 ? friend.Career[0].GroupId.ToString() : "не вказано"),
+                                   education = "Місце навчання: " + (friend.Education != null ? friend.Education.UniversityName : "не вказано"),
+                                   country = "Країна: " + (friend.Country != null ? friend.Country.Title : "не вказано"),
 
-        }
-
-        void FriendsAllData(long? _userId)
-        {
-            Users = new ObservableCollection<UserData>();
-            
-            foreach (User friend in GetFriendsData(_userId))
-            {
-                if (friend.FirstName == "DELETED") continue;
-                if (friend.Sex.ToString() == "Male") countMales++;
-                else countFemales++;
-
-                Users.Add(
-                   new UserData
-                   {
-                       firstName = friend.FirstName,
-                       lastName = friend.LastName,
-                       userID = friend.Id,
-                       birthday = "День народження: " + (friend.BirthDate != null ? (Convert.ToDateTime(friend.BirthDate)).ToLongDateString() : "не вказаний"),
-                       sex = "Стать: " + friend.Sex,
-                       city = "Місто: " + (friend.City != null ? friend.City.Title.ToString() : "не вказано"),
-                       online = "Онлайн: " + (friend.Online == true ? "Онлайн" : "неонлайн"),
-                       career = "Місце роботи: " + (friend.Career.Count != 0 ? friend.Career[0].GroupId.ToString() : "не вказано"),
-                       education = "Місце навчання: " + (friend.Education != null ? friend.Education.UniversityName : "не вказано"),
-                       country = "Країна: " + (friend.Country != null ? friend.Country.Title : "не вказано"),
-
-                       Photo = (friend.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? (friend.Photo200Orig != new Uri("https://vk.com/images/camera_200.png") ? friend.Photo200Orig : (friend.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg"))) : (friend.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? friend.Photo200Orig : (friend.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg")))),                    
-                   }
-           );
-            };
-        }
+                                   Photo = (friend.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? (friend.Photo200Orig != new Uri("https://vk.com/images/camera_200.png") ? friend.Photo200Orig : (friend.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg"))) : (friend.Photo200Orig != new Uri("https://vk.com/images/deactivated_200.png") ? friend.Photo200Orig : (friend.Sex.ToString() == "Male" ? new Uri("pack://application:,,,/Templates/Images/male.png") : new Uri("pack://application:,,,/Templates/Images/female.jpg")))),                    
+                               }
+                        );
+                    });
+                }
+            });
+        } 
 
         ReadOnlyCollection<User> GetFriendsData(long? _userId)
         {
             FriendsGetParams parameters = new FriendsGetParams
             {
-
                 UserId = _userId,
                 Fields = ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo200Orig |
                          ProfileFields.BirthDate | ProfileFields.City | ProfileFields.Sex |
                          ProfileFields.Online | ProfileFields.Uid | ProfileFields.Career | ProfileFields.Education | ProfileFields.Country,
-
                 Order = FriendsOrder.Name
-
             };
-
+      
             var users = _vkApi.Friends.Get(parameters);
             return users;
         }
 
-
         void GetStatisticData(long? _userId)
         {
+            Debug.WriteLine("Call GetStatistic Data");
             var users = _vkApi.Users.Get(new long[] { (long)_userId }, ProfileFields.All);
-            foreach (var user in users)
-            {
-                UsersStatistic = new UserData()
+
+           
+                foreach (var user in users)
                 {
-                    numberFriends = "Кількість друзів: " + user.Counters.Friends.ToString(),
-                    numberOnlineFriends = "Кількість друзів онланйн: " + user.Counters.OnlineFriends.ToString(),
-                    numberMutualFriends = "Кількість спільних друзів: " + user.Counters.MutualFriends.ToString(),
-                    numberFollowers = "Кількість підписників: " + user.Counters.Followers.ToString(),
-                    numberMales = "Кількість осіб чоловічої статі: " + this.countMales, numberFemales = "Кількість осіб жіночої статі: " + countFemales,
+                    UsersStatistic.numberFriends = "Кількість друзів: " + user.Counters.Friends.ToString();
+                    UsersStatistic.numberOnlineFriends = "Кількість друзів онлайн: " + user.Counters.OnlineFriends.ToString();
+                    UsersStatistic.numberMutualFriends = "Кількість спільних друзів: " + user.Counters.MutualFriends.ToString();
+                    UsersStatistic.numberFollowers = "Кількість підписників: " + user.Counters.Followers.ToString();
+                    UsersStatistic.numberMales = "Кількість осіб чоловічої статі: " + this.countMales;
+                    UsersStatistic.numberFemales = "Кількість осіб жіночої статі: " + countFemales;
 
-                    numberPhotos = "Кількість фотографій: " + user.Counters.Photos.ToString(),
-                    numberVideos = "Кількість відеозаписів: " + user.Counters.Videos.ToString(),
-                    numberAudios = "Кількість аудіозаписів: " + user.Counters.Audios.ToString(),
+                    UsersStatistic.numberPhotos = "Кількість фотографій: " + user.Counters.Photos.ToString();
+                    UsersStatistic.numberVideos = "Кількість відеозаписів: " + user.Counters.Videos.ToString();
+                    UsersStatistic.numberAudios = "Кількість аудіозаписів: " + user.Counters.Audios.ToString();
 
-                    Photo = user.Photo200Orig,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    birthday = Convert.ToDateTime(user.BirthDate).ToLongDateString(),
-                    city = user.City.Title
-                };
-            }
+                        if (user.Photo200Orig == new Uri("https://vk.com/images/deactivated_200.png") || user.Photo200Orig == new Uri("https://vk.com/images/camera_200.png"))
+                        {
+                            switch (user.Sex.ToString())
+                            {
+                                case "Famale": UsersStatistic.Photo = new Uri("pack://application:,,,/Templates/Images/female.png"); break;
+                                case "Male": UsersStatistic.Photo = new Uri("pack://application:,,,/Templates/Images/male.png"); break;
+                                default: UsersStatistic.Photo = new Uri("pack://application:,,,/Templates/Images/male.png"); break;
+                            }
+                        }
+                        else { UsersStatistic.Photo = user.Photo200Orig; }
+
+                    UsersStatistic.firstName = user.FirstName;
+                    UsersStatistic.lastName = user.LastName;
+                    UsersStatistic.birthday = user.BirthDate != null ? Convert.ToDateTime(user.BirthDate).ToLongDateString() : "";
+                    UsersStatistic.city = user.City == null ? "" : user.City.Title.ToString();
+            }  
+        }
+    
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName]string prop = "")
+        {
+            if (PropertyChanged != null)
+             PropertyChanged(this, new PropertyChangedEventArgs(prop));
+        }
+
+    }
+
+    public class CommandHandler : ICommand
+    {
+        private Action _action;
+        private bool _canExecute;
+        public CommandHandler(Action action, bool canExecute)
+        {
+            _action = action;
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public void Execute(object parameter)
+        {
+            _action();
         }
     }
 }
